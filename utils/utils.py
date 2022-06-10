@@ -461,3 +461,6 @@ def do_detect(model, img, conf_thresh, nms_thresh, use_cuda=1):
         print('           total : %f' % (t4 - t0))
         print('-----------------------------------')
     return boxes
+
+def myround(x, base=32):
+    return base * round(x/base)

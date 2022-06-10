@@ -4,7 +4,7 @@ from torchvision import transforms
 import numpy
 from yolov4_helper import Helper as YoloHelper
 import torch
-from utils.utils import do_detect, plot_boxes_cv2
+from utils.utils import do_detect, plot_boxes_cv2, myround
 import cv2
 
 import configs
@@ -36,8 +36,7 @@ def draw_boxes_with_label(cv2_image, yolo_model):
 if __name__ == "__main__":
     
     configs.torch_device = "cpu"
-    configs.yolo_cfg_width = 832
-    configs.yolo_cfg_height = 576
+
     configs.yolo_class_num = 4
 
     path="./videos/germany-1.mp4"
@@ -49,6 +48,9 @@ if __name__ == "__main__":
 
     configs.data_height = height
     configs.data_width = width
+
+    configs.yolo_cfg_width = myround(width, 32)
+    configs.yolo_cfg_height = myround(height, 32)
 
     fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
     writer = cv2.VideoWriter("test.mp4", fourcc, 30, (width, height))
