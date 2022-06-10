@@ -19,18 +19,15 @@ import argparse
 import configs
 
 
-def create_astroid_mask(darknet_model, image_path, box_scale, shape=(500, 500)):
+def create_astroid_mask(darknet_model, img, box_scale, shape=(500, 500)):
     mask = torch.zeros(*shape, 3)
     
-    img = Image.open(image_path).convert('RGB')
-    resize_small = transforms.Compose([
-            transforms.Resize((configs.yolo_cfg_height, configs.yolo_cfg_width)),
-    ])
-    img1 = resize_small(img)
-    h, w = numpy.array(img).shape[:2]
+    h, w = img.shape[:2]
+
+    img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
 
     boxes = do_detect(darknet_model, img1, 0.5, 0.4, False)
-    h, w = numpy.array(img).shape[:2]
+
     yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h,
         (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes]
     boxes = yolo_boxes
@@ -101,19 +98,15 @@ def create_astroid_mask(darknet_model, image_path, box_scale, shape=(500, 500)):
     return mask
 
 
-def create_grid_mask(darknet_model, image_path, lines=3, box_scale=1.0, shape=(500, 500)):
+def create_grid_mask(darknet_model, img, lines=3, box_scale=1.0, shape=(500, 500)):
     mask = torch.zeros(*shape, 3)
     # get yolo bounding boxes <-- this was commented out originally
-    img = Image.open(image_path).convert('RGB')
-    resize_small = transforms.Compose([
-            transforms.Resize((configs.yolo_cfg_height, configs.yolo_cfg_width)),
-    ])
-    img1 = resize_small(img)
+    h, w = img.shape[:2]
 
-    h, w = numpy.array(img).shape[:2]
+    img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
 
     boxes = do_detect(darknet_model, img1, 0.5, 0.4, True)
-    h, w = numpy.array(img).shape[:2]
+
     yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h, 
         (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes]
     boxes = yolo_boxes
@@ -204,8 +197,7 @@ def get_attack_loss(helper, img):
     al, on = helper.attack_loss(img)
     return al, on
 
-def specific_attack(model_helpers, img_source_path, img_name, mask, save_image_dir):
-    img = cv2.imread(os.path.join(img_source_path, img_name))
+def specific_attack(model_helpers, img, mask):
     img = torch.from_numpy(img).float()
 
     t, max_iterations = 0, 600
@@ -260,18 +252,8 @@ def specific_attack(model_helpers, img_source_path, img_name, mask, save_image_d
 
     min_img = min_img.detach().cpu().numpy()
     
-
-    if success_attack:
-        path = os.path.join(os.getcwd(), save_image_dir, img_name)
-    else:
-        path = os.path.join(os.getcwd(), save_image_dir, img_name.split(".")[0] + "_fail.png")
     
-    if cv2.imwrite(path, min_img):
-        print("Image saved at " + path)
-    else:
-        print("Image faled to save at " + path)
-    
-    return success_attack
+    return success_attack, min_img
 
 
 if __name__ == "__main__":
@@ -317,13 +299,27 @@ if __name__ == "__main__":
         print("img_path", img_name)
             
         image_source = os.path.join(SOURCE_DIR, img_name)
+
+        cv2_image = cv2.imread(image_source)
+
         if patch_type=="grid":
-            mask = create_grid_mask(yolov4_helper.darknet_model, image_source, lines, box_scale, (configs.data_height, configs.data_width))
+            mask = create_grid_mask(yolov4_helper.darknet_model, cv2_image, lines, box_scale, (configs.data_height, configs.data_width))
         else:
-            mask = create_astroid_mask(yolov4_helper.darknet_model, image_source, box_scale, (configs.data_height, configs.data_width))
+            mask = create_astroid_mask(yolov4_helper.darknet_model, cv2_image, box_scale, (configs.data_height, configs.data_width))
         
-        success_attack = specific_attack(model_helpers, SOURCE_DIR, img_name, mask, save_image_dir)
-        if success_attack: success_count += 1
+        success_attack, attack_img = specific_attack(model_helpers, cv2_image, mask)
+
+        if success_attack:
+            path = os.path.join(os.getcwd(), save_image_dir, img_name)
+            success_count += 1
+        else:
+            path = os.path.join(os.getcwd(), save_image_dir, img_name.split(".")[0] + "_fail.png")
+        
+        if cv2.imwrite(path, attack_img):
+            print("Image saved at " + path)
+        else:
+            print("Image faled to save at " + path)            
+                
         print("success: {}/{}".format(success_count, i + 1))
         
             

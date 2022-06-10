@@ -5,6 +5,7 @@ import numpy
 from yolov4_helper import Helper as YoloHelper
 import torch
 from utils.utils import do_detect, plot_boxes_cv2, myround
+from attack_yolo import create_grid_mask, create_astroid_mask, specific_attack 
 import cv2
 
 import configs
@@ -31,6 +32,20 @@ def draw_boxes_with_label(cv2_image, yolo_model):
     boxes = do_detect(yolo_model, resized_image, 0.5, 0.4, True)
 
     return plot_boxes_cv2(cv2_image, boxes, None, ["prohibitory", "danger", "mandatory", "others"])
+
+def draw_grid_patches(cv2_image, yolo_model):
+    mask = create_grid_mask(yolo_model, cv2_image, 3, 1.0, (configs.data_height, configs.data_width))
+            
+    success_attack, attack_img = specific_attack([yolo_model], cv2_image, mask)
+
+    return attack_img
+
+def draw_astroid_patches(cv2_image, yolo_model):
+    mask = create_astroid_mask(yolo_model, cv2_image, 1.0, (configs.data_height, configs.data_width))
+    
+    success_attack, attack_img = specific_attack([yolo_model], cv2_image, mask)
+
+    return attack_img
 
 
 if __name__ == "__main__":
@@ -59,7 +74,7 @@ if __name__ == "__main__":
     yolo_model = YoloHelper().darknet_model
     count = 0
     while success and count < 1000:
-        writer.write(draw_boxes_with_label(frame, yolo_model))
+        writer.write(draw_grid_patches(frame, yolo_model))
         success, frame = videoCap.read()
         count += 1
         print(count)
