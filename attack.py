@@ -35,12 +35,13 @@ def create_astroid_mask(darknet_model, faster_model, image_path, box_scale, shap
     grids = boxes
     """
 
+    
     result = inference_detector(faster_model, image_path)
     boxes = []
     for box in result:
         if len(box)>0:
             boxes += box.tolist()
-
+    
     boxes = [box[:4] for box in boxes if box[-1]>0.3]
     #boxes += yolo_boxes
     boxes = sorted(boxes, key=lambda x:(x[2]-x[0])*(x[3]-x[1])) # sort by area

@@ -12,6 +12,7 @@ import struct  # get_image_size
 import imghdr  # get_image_size
 from constant import *
 
+import configs
 
 def sigmoid(x):
     return 1.0 / (np.exp(-x) + 1.)
@@ -418,7 +419,7 @@ def do_detect(model, img, conf_thresh, nms_thresh, use_cuda=1):
 
     if use_cuda:
         #img = img.cuda()
-        img = img.to(device)
+        img = img.to(configs.torch_device)
     img = torch.autograd.Variable(img)
     t2 = time.time()
 
@@ -437,7 +438,7 @@ def do_detect(model, img, conf_thresh, nms_thresh, use_cuda=1):
         masked_anchors = [anchor / strides[i] for anchor in masked_anchors]
         # temp = get_region_boxes1(list_boxes[i].data.numpy(), conf_thresh, 80, masked_anchors, len(anchor_masks[i]))
         # boxes.append(temp)
-        boxes.append(get_region_boxes1(list_boxes[i].data.cpu().numpy(), conf_thresh, 80, masked_anchors, len(anchor_masks[i])))
+        boxes.append(get_region_boxes1(list_boxes[i].data.cpu().numpy(), conf_thresh, configs.yolo_class_num, masked_anchors, len(anchor_masks[i])))
         # boxes.append(get_region_boxes(list_boxes[i], 0.6, 80, masked_anchors, len(anchor_masks[i])))
     if img.shape[0] > 1:
         bboxs_for_imgs = [

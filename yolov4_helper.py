@@ -9,26 +9,29 @@ from tool.darknet2pytorch import *
 import numpy
 from constant import *
 
+import configs
+
+
 def resize(img:torch.tensor):
     # resize
     img_pil = img.round().byte().detach().cpu().numpy()
     img_pil = Image.fromarray(img_pil.astype('uint8'), 'RGB')
     resize_small = transforms.Compose([
-            transforms.Resize((608, 608)),
+            transforms.Resize((configs.yolo_cfg_height, configs.yolo_cfg_width)),
         ])
     img_pil = resize_small(img_pil)
     img_pil = numpy.array(img_pil)
-    img_pil = torch.from_numpy(img_pil).float().to(device)
+    img_pil = torch.from_numpy(img_pil).float().to(configs.torch_device)
 
     img = img.permute(2,0,1)
-    img = nn.functional.interpolate(img.unsqueeze(0), size=(608, 608),mode="bilinear",  align_corners=False)
+    img = nn.functional.interpolate(img.unsqueeze(0), size=(configs.yolo_cfg_height, configs.yolo_cfg_width),mode="bilinear",  align_corners=False)
     img = img.squeeze(0).permute(1,2,0)
     img = img + (img_pil-img.detach())
     return img
 
 def _input_transform(img:torch.tensor):
     ## bgr2rgb
-    new_img = torch.zeros(img.shape).to(device)
+    new_img = torch.zeros(img.shape).to(configs.torch_device)
     new_img[:,:,0] = new_img[:,:,0]+img[:,:,2]
     new_img[:,:,1] = new_img[:,:,1]+img[:,:,1]
     new_img[:,:,2] = new_img[:,:,2]+img[:,:,0]
@@ -56,40 +59,40 @@ def transforms_test(img_path="../images/991.png"):
     img1 = torch.ByteTensor(torch.ByteStorage.from_buffer(img1.tobytes()))
     img1 = img1.view(height, width, 3).transpose(0, 1).transpose(0, 2).contiguous()
     img1 = img1.view(1, 3, height, width)
-    img1 = img1.float().div(255.0).to(device)
+    img1 = img1.float().div(255.0).to(configs.torch_device)
 
     img2 = cv2.imread(img_path)
     img2 = torch.from_numpy(img2).float()
-    img2 = _input_transform(img2).to(device)
+    img2 = _input_transform(img2).to(configs.torch_device)
     print((img1-img2).sum())
     assert (img1-img2).sum()==0
 
 class Helper():
     def __init__(self):
-        cfgfile = "models/yolov4.cfg"
-        weightfile = "models/yolov4.weights"
+        cfgfile = "models/gtsdb.cfg"
+        weightfile = "models/gtsdb_4000.weights"
         self.darknet_model = Darknet(cfgfile)
         self.darknet_model.load_weights(weightfile)
         #self.darknet_model = self.darknet_model.train().to(device)
-        self.darknet_model = self.darknet_model.eval().to(device)
+        self.darknet_model = self.darknet_model.eval().to(configs.torch_device)
 
     def input_transforms(self, img:torch.tensor):
         img = _input_transform(img)
 
     def get_cls_scores(self, img:torch.tensor):
-        img = _input_transform(img).to(device)
+        img = _input_transform(img).to(configs.torch_device)
         output = self.darknet_model(img)
         self.features = self.darknet_model.features
         scores = []
         for item in output:
             h, w = item.shape[-2], item.shape[-1]
-            item = item.reshape(-1, 5+80, h*w).permute(1,0,2).reshape(5+80, -1)
+            item = item.reshape(-1, 5+configs.yolo_class_num, h*w).permute(1,0,2).reshape(5+configs.yolo_class_num, -1)
             scores += [item[4, :].sigmoid()]
 
         return scores
 
     def loss_in_box(self, img, box):
-        img = _input_transform(img).to(device)
+        img = _input_transform(img).to(configs.torch_device)
         output = self.darknet_model(img)
 
         import pdb;pdb.set_trace()
@@ -106,7 +109,7 @@ class Helper():
 
 
     def attack_loss(self, img, t=0.45):
-        img = img.to(device)
+        img = img.to(configs.torch_device)
         scores = self.get_cls_scores(img)
         thresh_loss = 0
         objects_num = 0
