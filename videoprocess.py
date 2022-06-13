@@ -7,24 +7,42 @@ import torch
 from utils.utils import do_detect, plot_boxes_cv2, myround
 from attack_yolo import create_grid_mask, create_astroid_mask, specific_attack 
 import cv2
+from utility.utils import *
+from utility.torch_utils import *
+from utility.darknet2pytorch import Darknet
+import torch
 
 import configs
 
-def get_yolo_boxes(image_path, yolo_model):
-    img = Image.open(image_path).convert('RGB')
-    resize_small = transforms.Compose([
-        transforms.Resize((configs.yolo_cfg_height, configs.yolo_cfg_width)),
-    ])
-    img1 = resize_small(img)
-    h, w = numpy.array(img).shape[:2]
+use_cuda = True
 
-    boxes = do_detect(yolo_model, img1, 0.5, 0.4, True)
-    h, w = numpy.array(img).shape[:2]
-    yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h,
-        (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes]
 
-    boxes = sorted(boxes, key=lambda x:(x[2]-x[0])*(x[3]-x[1])) # sort by area
-    return yolo_boxes
+def get_yolo_boxes(img, m):
+    # img = Image.open(image_path).convert('RGB')
+    # resize_small = transforms.Compose([
+    #     transforms.Resize((configs.yolo_cfg_height, configs.yolo_cfg_width)),
+    # ])
+    # img1 = resize_small(img)
+    # h, w = numpy.array(img).shape[:2]
+
+    # boxes = do_detect(yolo_model, img1, 0.5, 0.4, True)
+    # h, w = numpy.array(img).shape[:2]
+    # yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h,
+    #     (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes]
+
+    # boxes = sorted(boxes, key=lambda x:(x[2]-x[0])*(x[3]-x[1])) # sort by area
+    # return yolo_boxes
+    sized = cv2.resize(img, (m.width, m.height))
+    sized = cv2.cvtColor(sized, cv2.COLOR_BGR2RGB)
+
+    for i in range(2):
+        start = time.time()
+        boxes = do_detect(m, sized, 0.4, 0.6, use_cuda)
+        finish = time.time()
+        # if i == 1:
+        #     print('%s: Predicted in %f seconds.' % (image_path, (finish - start)))
+
+    return plot_boxes_cv2(img, boxes[0], class_names=class_names)
 
 def draw_boxes_with_label(cv2_image, yolo_model):
     resized_image = cv2.resize(cv2_image, (configs.yolo_cfg_width, configs.yolo_cfg_height))
@@ -50,11 +68,25 @@ def draw_astroid_patches(cv2_image, yolo_helper):
 
 if __name__ == "__main__":
     
-    configs.torch_device = "cpu"
+    configs.torch_device = "cuda"
 
     configs.yolo_class_num = 4
 
-    path="./videos/germany-1.mp4"
+    path="./sample_6.mp4"
+
+    m = Darknet('./models/gtsdb.cfg')
+
+    m.print_network()
+    m.load_weights('./models/gtsdb_4000.weights')
+    # print('Loading weights from %s... Done!' % (weightfile))
+
+    if use_cuda:
+        m.cuda()
+
+    num_classes = m.num_classes
+    
+    class_names = load_class_names('./x.names')
+
     
     videoCap = cv2.VideoCapture(path) 
 
@@ -74,7 +106,7 @@ if __name__ == "__main__":
     yolo_helper = YoloHelper()
     count = 0
     while success:
-        writer.write(draw_grid_patches(frame, yolo_helper).astype(int))
+        writer.write(get_yolo_boxes(frame, m).astype(numpy.uint8))
         success, frame = videoCap.read()
         count += 1
         print(count)
