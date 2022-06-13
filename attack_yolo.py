@@ -181,8 +181,9 @@ def create_grid_mask(darknet_model, img, lines=3, box_scale=1.0, shape=(500, 500
 
         visited_mask[y1:y2, x1:x2, :] = 1
 
-    print("mask sum", mask.sum())
-    return mask
+    maskSum = mask.sum()
+    print("mask sum", maskSum)
+    return mask, maskSum
 
 def get_delta(w):
     w = torch.clamp(w, 0, 255)
@@ -200,7 +201,7 @@ def get_attack_loss(helper, img):
 def specific_attack(model_helpers, img, mask):
     img = torch.from_numpy(img).float()
 
-    t, max_iterations = 0, 600
+    t, max_iterations = 0, 60
     stop_loss = 1e-6
     eps = 1
     w = torch.zeros(img.shape).float()+127

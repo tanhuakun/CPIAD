@@ -33,17 +33,17 @@ def draw_boxes_with_label(cv2_image, yolo_model):
 
     return plot_boxes_cv2(cv2_image, boxes, None, ["prohibitory", "danger", "mandatory", "others"])
 
-def draw_grid_patches(cv2_image, yolo_model):
-    mask = create_grid_mask(yolo_model, cv2_image, 3, 1.0, (configs.data_height, configs.data_width))
-            
-    success_attack, attack_img = specific_attack([yolo_model], cv2_image, mask)
+def draw_grid_patches(cv2_image, yolo_helper):
+    mask, maskSum = create_grid_mask(yolo_helper.darknet_model, cv2_image, 3, 1.0, (configs.data_height, configs.data_width))
+    if maskSum != 0:
+        success_attack, attack_img = specific_attack([yolo_helper], cv2_image, mask)
+        return attack_img
+    return cv2_image
 
-    return attack_img
-
-def draw_astroid_patches(cv2_image, yolo_model):
-    mask = create_astroid_mask(yolo_model, cv2_image, 1.0, (configs.data_height, configs.data_width))
+def draw_astroid_patches(cv2_image, yolo_helper):
+    mask = create_astroid_mask(yolo_helper.darknet_model, cv2_image, 1.0, (configs.data_height, configs.data_width))
     
-    success_attack, attack_img = specific_attack([yolo_model], cv2_image, mask)
+    success_attack, attack_img = specific_attack([yolo_helper], cv2_image, mask)
 
     return attack_img
 
@@ -71,13 +71,14 @@ if __name__ == "__main__":
     writer = cv2.VideoWriter("test.mp4", fourcc, 30, (width, height))
 
     success, frame = videoCap.read()
-    yolo_model = YoloHelper().darknet_model
+    yolo_helper = YoloHelper()
     count = 0
-    while success and count < 1000:
-        writer.write(draw_grid_patches(frame, yolo_model))
+    while success:
+        writer.write(draw_grid_patches(frame, yolo_helper).astype(int))
         success, frame = videoCap.read()
         count += 1
         print(count)
+
 
     writer.release()
     # boxes = get_boxes(path)
