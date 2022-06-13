@@ -4,7 +4,7 @@ from torchvision import transforms
 import numpy
 from yolov4_helper import Helper as YoloHelper
 import torch
-from utils.utils import do_detect, plot_boxes_cv2, myround
+from utils.utils import plot_boxes_cv2, myround
 from attack_yolo import create_grid_mask, create_astroid_mask, specific_attack 
 import cv2
 from utility.utils import *
@@ -58,9 +58,16 @@ def draw_grid_patches(cv2_image, yolo_helper):
         return attack_img
     return cv2_image
 
-def draw_astroid_patches(cv2_image, yolo_helper):
-    mask = create_astroid_mask(yolo_helper.darknet_model, cv2_image, 1.0, (configs.data_height, configs.data_width))
+# def draw_astroid_patches(cv2_image, yolo_helper):
+#     mask = create_astroid_mask(yolo_helper.darknet_model, cv2_image, 1.0, (configs.data_height, configs.data_width))
     
+#     success_attack, attack_img = specific_attack([yolo_helper], cv2_image, mask)
+
+#     return attack_img
+
+def draw_astroid_patches(cv2_image, m):
+    mask = create_astroid_mask(m, cv2_image, 1.0, (configs.data_height, configs.data_width))
+    yolo_helper = YoloHelper()
     success_attack, attack_img = specific_attack([yolo_helper], cv2_image, mask)
 
     return attack_img
@@ -106,7 +113,7 @@ if __name__ == "__main__":
     yolo_helper = YoloHelper()
     count = 0
     while success:
-        writer.write(get_yolo_boxes(frame, m).astype(numpy.uint8))
+        writer.write(draw_astroid_patches(frame, m).astype(numpy.uint8))
         success, frame = videoCap.read()
         count += 1
         print(count)

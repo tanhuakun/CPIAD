@@ -12,7 +12,7 @@
 '''
 from __future__ import division
 import cv2
-from tool.darknet2pytorch import Darknet
+from utility.darknet2pytorch import Darknet
 import argparse
 from utility.utils import *
 from utility.torch_utils import *

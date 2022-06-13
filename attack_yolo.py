@@ -18,21 +18,32 @@ import argparse
 
 import configs
 
+use_cuda = True
 
-def create_astroid_mask(darknet_model, img, box_scale, shape=(500, 500)):
+def create_astroid_mask(m, img, box_scale, shape=(500, 500)):
     mask = torch.zeros(*shape, 3)
+
+    sized = cv2.resize(img, (m.width, m.height))
+    sized = cv2.cvtColor(sized, cv2.COLOR_BGR2RGB)
+
+    for i in range(2):
+        start = time.time()
+        boxes = do_detect(m, sized, 0.4, 0.6, use_cuda)
+        finish = time.time()
+        # if i == 1:
+        #     print('%s: Predicted in %f seconds.' % (image_path, (finish - start)))
     
-    h, w = img.shape[:2]
+    # h, w = img.shape[:2]
 
-    img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
+    # img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
 
-    boxes = do_detect(darknet_model, img1, 0.5, 0.4, False)
+    # boxes = do_detect(darknet_model, img1, 0.5, 0.4, False)
 
-    yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h,
-        (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes]
-    boxes = yolo_boxes
-    boxes = sorted(boxes, key=lambda x:(x[2]-x[0])*(x[3]-x[1])) # sort by area
-    grids = boxes
+    # yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h,
+    #     (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes]
+    # boxes = yolo_boxes
+    # boxes = sorted(boxes, key=lambda x:(x[2]-x[0])*(x[3]-x[1])) # sort by area
+    grids = boxes[0]
     
 
     '''
