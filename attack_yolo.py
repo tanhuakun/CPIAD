@@ -199,6 +199,7 @@ def get_attack_loss(helper, img):
     return al, on
 
 def specific_attack(model_helpers, img, mask):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = torch.from_numpy(img).float()
 
     t, max_iterations = 0, 60

@@ -80,7 +80,10 @@ class Helper():
         img = _input_transform(img)
 
     def get_cls_scores(self, img:torch.tensor):
-        img = _input_transform(img).to(configs.torch_device)
+        #img = _input_transform(img).to(configs.torch_device)
+        img = img.round().detach().cpu().numpy()
+        img = cv2.resize(img, (configs.yolo_resize_width, configs.yolo_resize_height))
+        img = torch.from_numpy(img.transpose(2, 0, 1)).float().div(255.0).unsqueeze(0)
         output = self.darknet_model(img)
         self.features = self.darknet_model.features
         scores = []

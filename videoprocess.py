@@ -28,7 +28,7 @@ def get_yolo_boxes(image_path, yolo_model):
 
 def draw_boxes_with_label(cv2_image, yolo_model):
     resized_image = cv2.resize(cv2_image, (configs.yolo_resize_width, configs.yolo_resize_height))
-
+    resized_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)
     boxes = do_detect(yolo_model, resized_image, 0.5, 0.4, True)
 
     return plot_boxes_cv2(cv2_image, boxes, None, ["prohibitory", "danger", "mandatory", "others"])
@@ -50,7 +50,7 @@ def draw_astroid_patches(cv2_image, yolo_helper):
 
 if __name__ == "__main__":
     
-    configs.torch_device = "cuda"
+    configs.torch_device = "cpu"
 
     configs.yolo_class_num = 4
 
