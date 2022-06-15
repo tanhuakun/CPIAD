@@ -73,10 +73,10 @@ class Helper():
     def __init__(self):
         cfgfile = "models/gtsdb.cfg"
         weightfile = "models/gtsdb_4000.weights"
-        self.darknet_model = Darknet(cfgfile)
-        self.darknet_model.load_weights(weightfile)
+        #self.darknet_model = Darknet(cfgfile)
+        #self.darknet_model.load_weights(weightfile)
         #self.darknet_model = self.darknet_model.train().to(device)
-        self.darknet_model = self.darknet_model.eval().to(configs.torch_device)
+        #self.darknet_model = self.darknet_model.eval().to(configs.torch_device)
 
     def load_darknet_model(self, model):
     
