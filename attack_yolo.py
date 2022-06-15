@@ -16,12 +16,11 @@ import cv2
 from constant import *
 import argparse
 from utility.utils import *
-from utility.torch_utils import *
 from utility.darknet2pytorch import Darknet
 
 import configs
 
-from utility.torch_utils import do_detect
+from utility.torch_utils import do_detect2
 
 use_cuda = True
 
@@ -32,7 +31,7 @@ def create_astroid_mask(m, img, box_scale, shape=(500, 500)):
     sized = cv2.cvtColor(sized, cv2.COLOR_BGR2RGB)
 
     #for i in range(2):
-    boxes = do_detect(m, sized, 0.4, 0.6, use_cuda)
+    boxes = do_detect2(m, sized, 0.4, 0.6, use_cuda)
         # if i == 1:
         #     print('%s: Predicted in %f seconds.' % (image_path, (finish - start)))
     
@@ -125,7 +124,7 @@ def create_grid_mask(darknet_model, img, lines=3, box_scale=1.0, shape=(500, 500
 
     img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
-    boxes = do_detect(darknet_model, img1, 0.5, 0.4, False)
+    boxes = do_detect2(darknet_model, img1, 0.5, 0.4, False)
     
     yolo_boxes = []
     for inner_box in boxes:
