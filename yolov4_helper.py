@@ -108,16 +108,16 @@ class Helper():
 
 
 
-    def attack_loss(self, img, t=0.45):
+    def attack_loss(self, img, conf_t=0.35, mask_t=0.25):
         img = img.to(configs.torch_device)
         scores = self.get_cls_scores(img)
         thresh_loss = 0
         objects_num = 0
         loss = 0
         for score in scores:
-            objects_num += (score>0.5).sum().item()
+            objects_num += (score>conf_t).sum().item()
             loss += score.sum()
-            mask = score>0.45
+            mask = score>mask_t
             score = score *mask
             if mask.sum()!=0: thresh_loss += (score.sum() / mask.sum())
         if thresh_loss==0: return loss, objects_num

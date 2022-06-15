@@ -25,8 +25,8 @@ def create_astroid_mask(darknet_model, img, box_scale, shape=(500, 500)):
     h, w = img.shape[:2]
 
     img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
-
-    boxes = do_detect(darknet_model, img1, 0.5, 0.4, False)
+    img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+    boxes = do_detect(darknet_model, img1, 0.35, 0.4, False)
 
     yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h,
         (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes]
@@ -104,8 +104,8 @@ def create_grid_mask(darknet_model, img, lines=3, box_scale=1.0, shape=(500, 500
     h, w = img.shape[:2]
 
     img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
-
-    boxes = do_detect(darknet_model, img1, 0.5, 0.4, True)
+    img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+    boxes = do_detect(darknet_model, img1, 0.35, 0.4, True)
 
     yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h, 
         (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes]
