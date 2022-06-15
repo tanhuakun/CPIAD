@@ -13,7 +13,7 @@ import configs
 def get_yolo_boxes(image_path, yolo_model):
     img = Image.open(image_path).convert('RGB')
     resize_small = transforms.Compose([
-        transforms.Resize((configs.yolo_cfg_height, configs.yolo_cfg_width)),
+        transforms.Resize((configs.yolo_resize_height, configs.yolo_resize_width)),
     ])
     img1 = resize_small(img)
     h, w = numpy.array(img).shape[:2]
@@ -27,7 +27,7 @@ def get_yolo_boxes(image_path, yolo_model):
     return yolo_boxes
 
 def draw_boxes_with_label(cv2_image, yolo_model):
-    resized_image = cv2.resize(cv2_image, (configs.yolo_cfg_width, configs.yolo_cfg_height))
+    resized_image = cv2.resize(cv2_image, (configs.yolo_resize_width, configs.yolo_resize_height))
 
     boxes = do_detect(yolo_model, resized_image, 0.5, 0.4, True)
 
@@ -64,8 +64,8 @@ if __name__ == "__main__":
     configs.data_height = height
     configs.data_width = width
 
-    configs.yolo_cfg_width = myround(width, 32)
-    configs.yolo_cfg_height = myround(height, 32)
+    configs.yolo_resize_width = myround(width, 32)
+    configs.yolo_resize_height = myround(height, 32)
 
     fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
     writer = cv2.VideoWriter("test.mp4", fourcc, 30, (width, height))

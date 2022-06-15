@@ -17,14 +17,14 @@ def resize(img:torch.tensor):
     img_pil = img.round().byte().detach().cpu().numpy()
     img_pil = Image.fromarray(img_pil.astype('uint8'), 'RGB')
     resize_small = transforms.Compose([
-            transforms.Resize((configs.yolo_cfg_height, configs.yolo_cfg_width)),
+            transforms.Resize((configs.yolo_resize_height, configs.yolo_resize_width)),
         ])
     img_pil = resize_small(img_pil)
     img_pil = numpy.array(img_pil)
     img_pil = torch.from_numpy(img_pil).float().to(configs.torch_device)
 
     img = img.permute(2,0,1)
-    img = nn.functional.interpolate(img.unsqueeze(0), size=(configs.yolo_cfg_height, configs.yolo_cfg_width),mode="bilinear",  align_corners=False)
+    img = nn.functional.interpolate(img.unsqueeze(0), size=(configs.yolo_resize_height, configs.yolo_resize_width),mode="bilinear",  align_corners=False)
     img = img.squeeze(0).permute(1,2,0)
     img = img + (img_pil-img.detach())
     return img

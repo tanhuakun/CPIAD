@@ -15,7 +15,7 @@ import configs
 def get_yolo_boxes(image_path, yolo_model):
     img = Image.open(image_path).convert('RGB')
     resize_small = transforms.Compose([
-        transforms.Resize((configs.yolo_cfg_height, configs.yolo_cfg_width)),
+        transforms.Resize((configs.yolo_resize_height, configs.yolo_resize_width)),
     ])
     img1 = resize_small(img)
     h, w = numpy.array(img).shape[:2]

@@ -24,7 +24,7 @@ def create_astroid_mask(darknet_model, img, box_scale, shape=(500, 500)):
     
     h, w = img.shape[:2]
 
-    img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
+    img1 = cv2.resize(img, (configs.yolo_resize_width, configs.yolo_resize_height))
     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
     boxes = do_detect(darknet_model, img1, 0.35, 0.4, False)
 
@@ -103,7 +103,7 @@ def create_grid_mask(darknet_model, img, lines=3, box_scale=1.0, shape=(500, 500
     # get yolo bounding boxes <-- this was commented out originally
     h, w = img.shape[:2]
 
-    img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
+    img1 = cv2.resize(img, (configs.yolo_resize_width, configs.yolo_resize_height))
     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
     boxes = do_detect(darknet_model, img1, 0.35, 0.4, True)
 
@@ -261,8 +261,8 @@ if __name__ == "__main__":
 
     SOURCE_DIR = "images2"
     configs.torch_device = "cpu"
-    configs.yolo_cfg_width = 960
-    configs.yolo_cfg_height = 576
+    configs.yolo_resize_width = 960
+    configs.yolo_resize_height = 576
     configs.yolo_class_num = 4
     configs.data_width = 1360
     configs.data_height = 800
