@@ -10,7 +10,8 @@ import itertools
 import struct  # get_image_size
 import imghdr  # get_image_size
 
-from utility import utils 
+from utility import utils
+
 
 
 def bbox_ious(boxes1, boxes2, x1y1x2y2=True):
@@ -93,6 +94,7 @@ def do_detect2(model, img, conf_thresh, nms_thresh, use_cuda=1):
         t1 = time.time()
 
         output = model(img)
+
 
         t2 = time.time()
 

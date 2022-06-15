@@ -3,17 +3,19 @@ from PIL import Image
 from torchvision import transforms
 import numpy
 from yolov4_helper import Helper as YoloHelper
-from utils.utils import plot_boxes_cv2, myround
+from yoloTorch import Helper as YoloTorch
+
+from utils.utils import plot_boxes_cv2, myround, do_detect
 from attack_yolo import create_grid_mask, create_astroid_mask, specific_attack 
 import cv2
-from utility.utils import *
-from utility.torch_utils import *
-from utility.darknet2pytorch import Darknet
+# from utility.utils import *
+# from utility.torch_utils import *
+# from utility.darknet2pytorch import Darknet
 import torch
 
 import configs
 
-use_cuda = True
+use_cuda = False
 
 
 def get_yolo_boxes(img, m):
@@ -44,9 +46,11 @@ def get_yolo_boxes(img, m):
     return plot_boxes_cv2(img, boxes[0], class_names=class_names)
 
 def draw_boxes_with_label(cv2_image, yolo_model):
-    resized_image = cv2.resize(cv2_image, (configs.yolo_cfg_width, configs.yolo_cfg_height))
 
-    boxes = do_detect2(yolo_model, resized_image, 0.5, 0.4, True)
+    resized_image = cv2.resize(cv2_image, (configs.yolo_cfg_width, configs.yolo_cfg_height))
+    resized_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)
+
+    boxes = do_detect(yolo_model, resized_image, 0.5, 0.4, True)
 
     return plot_boxes_cv2(cv2_image, boxes, None, ["prohibitory", "danger", "mandatory", "others"])
 
@@ -72,53 +76,54 @@ def draw_astroid_patches(cv2_image, m):
     return attack_img
 
 
+
 if __name__ == "__main__":
     
-    configs.torch_device = "cuda"
+    configs.torch_device = "cpu"
 
     configs.yolo_class_num = 4
 
-    path="./sample_6.mp4"
+    path="./test3.png"
 
-    m = Darknet('./models/gtsdb.cfg')
+    # m = Darknet('./models/gtsdb.cfg')
 
-    m.print_network()
-    m.load_weights('./models/gtsdb_4000.weights')
-    # print('Loading weights from %s... Done!' % (weightfile))
+    # # m.print_network()
+    # m.load_weights('./models/gtsdb_4000.weights')
+    # # print('Loading weights from %s... Done!' % (weightfile))
 
-    if use_cuda:
-        m.cuda()
+    # if use_cuda:
+    #     m.cuda()
 
-    num_classes = m.num_classes
-    
-    class_names = load_class_names('./x.names')
 
-    
-    videoCap = cv2.VideoCapture(path) 
+    cv2_image = cv2.imread(path)
+    # videoCap = cv2.VideoCapture(path) 
 
-    width  = int(videoCap.get(cv2.CAP_PROP_FRAME_WIDTH))   # float `width`
-    height = int(videoCap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
+    # width  = int(videoCap.get(cv2.CAP_PROP_FRAME_WIDTH))   # float `width`
+    # height = int(videoCap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
 
-    configs.data_height = height
-    configs.data_width = width
+    configs.data_height = 800
+    configs.data_width = 1360
 
-    configs.yolo_cfg_width = myround(width, 32)
-    configs.yolo_cfg_height = myround(height, 32)
+    configs.yolo_cfg_width = myround(1360, 32)
+    configs.yolo_cfg_height = myround(800, 32)
 
-    fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-    writer = cv2.VideoWriter("test.mp4", fourcc, 30, (width, height))
+    # fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+    # writer = cv2.VideoWriter("test.mp4", fourcc, 30, (width, height))
 
-    success, frame = videoCap.read()
+    # success, frame = videoCap.read()
     yolo_helper = YoloHelper()
-    count = 0
-    while success:
-        writer.write(draw_astroid_patches(frame, m).astype(numpy.uint8))
-        success, frame = videoCap.read()
-        count += 1
-        print(count)
+    # count = 0
+    # while success:
+    #     writer.write(draw_astroid_patches(frame, m).astype(numpy.uint8))
+    #     success, frame = videoCap.read()
+    #     count += 1
+    #     print(count)
 
 
-    writer.release()
+    # writer.release()
+
+    cv2.imwrite("test5.png", draw_boxes_with_label(cv2_image, yolo_helper.darknet_model))
+
     # boxes = get_boxes(path)
     # print(len(boxes))
     # print(boxes)

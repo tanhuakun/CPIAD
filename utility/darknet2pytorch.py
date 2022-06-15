@@ -215,6 +215,7 @@ class Darknet(nn.Module):
                     self.loss = self.models[ind](x)
                 outputs[ind] = None
             elif block['type'] == 'yolo':
+                self.features = x
                 # if self.training:
                 #     pass
                 # else:
@@ -230,7 +231,10 @@ class Darknet(nn.Module):
         if self.training:
             return out_boxes
         else:
+            print(out_boxes)
             return get_region_boxes(out_boxes)
+            # return out_boxes
+
 
     def print_network(self):
         print_cfg(self.blocks)

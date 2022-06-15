@@ -189,6 +189,7 @@ class Darknet(nn.Module):
             return out_boxes
             #return loss
         else:
+            # print(out_boxes)
             return out_boxes
 
     def print_network(self):
