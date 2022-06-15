@@ -3,7 +3,6 @@ from PIL import Image
 from torchvision import transforms
 import numpy
 from yolov4_helper import Helper as YoloHelper
-import torch
 from utils.utils import plot_boxes_cv2, myround
 from attack_yolo import create_grid_mask, create_astroid_mask, specific_attack 
 import cv2
@@ -37,7 +36,7 @@ def get_yolo_boxes(img, m):
 
     for i in range(2):
         start = time.time()
-        boxes = do_detect(m, sized, 0.4, 0.6, use_cuda)
+        boxes = do_detect2(m, sized, 0.4, 0.6, use_cuda)
         finish = time.time()
         # if i == 1:
         #     print('%s: Predicted in %f seconds.' % (image_path, (finish - start)))
@@ -46,7 +45,7 @@ def get_yolo_boxes(img, m):
 def draw_boxes_with_label(cv2_image, yolo_model):
     resized_image = cv2.resize(cv2_image, (configs.yolo_cfg_width, configs.yolo_cfg_height))
 
-    boxes = do_detect(yolo_model, resized_image, 0.5, 0.4, True)
+    boxes = do_detect2(yolo_model, resized_image, 0.5, 0.4, True)
 
     return plot_boxes_cv2(cv2_image, boxes, None, ["prohibitory", "danger", "mandatory", "others"])
 

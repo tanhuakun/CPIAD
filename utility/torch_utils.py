@@ -48,7 +48,7 @@ def bbox_ious(boxes1, boxes2, x1y1x2y2=True):
 def get_region_boxes(boxes_and_confs):
 
     # print('Getting boxes from boxes and confs ...')
-
+    
     boxes_list = []
     confs_list = []
     det_confs_list = []
@@ -76,7 +76,7 @@ def convert2cpu_long(gpu_matrix):
 
 
 
-def do_detect(model, img, conf_thresh, nms_thresh, use_cuda=1):
+def do_detect2(model, img, conf_thresh, nms_thresh, use_cuda=1):
     model.eval()
     with torch.no_grad():
         t0 = time.time()

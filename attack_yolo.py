@@ -15,6 +15,9 @@ import cv2
 #from utils.utils import *
 from constant import *
 import argparse
+from utility.utils import *
+from utility.torch_utils import *
+from utility.darknet2pytorch import Darknet
 
 import configs
 
@@ -33,17 +36,17 @@ def create_astroid_mask(m, img, box_scale, shape=(500, 500)):
         # if i == 1:
         #     print('%s: Predicted in %f seconds.' % (image_path, (finish - start)))
     
-    # h, w = img.shape[:2]
+
+    h, w = img.shape[:2]
 
     # img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
 
     # boxes = do_detect(darknet_model, img1, 0.5, 0.4, False)
 
-    # yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h,
-    #     (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes]
-    # boxes = yolo_boxes
-    # boxes = sorted(boxes, key=lambda x:(x[2]-x[0])*(x[3]-x[1])) # sort by area
-    grids = boxes[0]
+    yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h,
+        (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes[0]]
+
+    grids = sorted(yolo_boxes, key=lambda x:(x[2]-x[0])*(x[3]-x[1])) # sort by area
     
 
     '''
@@ -70,6 +73,12 @@ def create_astroid_mask(m, img, box_scale, shape=(500, 500)):
 
         y1 = int(np.clip(y1, 0, configs.data_height))
         y2 = int(np.clip(y2, 0, configs.data_height))
+
+        # x1 = int(np.clip(x1, 0, m.width))
+        # x2 = int(np.clip(x2, 0, m.width))
+
+        # y1 = int(np.clip(y1, 0, m.height))
+        # y2 = int(np.clip(y2, 0, m.height))
 
         print("x1, y1, x2, y2", x1, y1, x2, y2)
         y_middle = (y1+y2)//2
