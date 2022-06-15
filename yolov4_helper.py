@@ -1,6 +1,6 @@
 import torch
 from torch.nn import functional as F
-from torch import nn
+from torch import nn, tensor
 import cv2
 from torchvision import transforms
 from PIL import ImageFile
@@ -8,6 +8,8 @@ from PIL import Image
 from tool.darknet2pytorch import *
 import numpy
 from constant import *
+
+from utility.utils import nms_cpu
 
 import configs
 
@@ -76,20 +78,24 @@ class Helper():
         #self.darknet_model = self.darknet_model.train().to(device)
         self.darknet_model = self.darknet_model.eval().to(configs.torch_device)
 
+    def load_darknet_model(self, model):
+    
+        self.darknet_model = model
+
     def input_transforms(self, img:torch.tensor):
         img = _input_transform(img)
 
     def get_cls_scores(self, img:torch.tensor):
         img = _input_transform(img).to(configs.torch_device)
         output = self.darknet_model(img)
-        self.features = self.darknet_model.features
-        scores = []
-        for item in output:
-            h, w = item.shape[-2], item.shape[-1]
-            item = item.reshape(-1, 5+configs.yolo_class_num, h*w).permute(1,0,2).reshape(5+configs.yolo_class_num, -1)
-            scores += [item[4, :].sigmoid()]
+        #self.features = self.darknet_model.features
+        #scores = []
+        # for item in output:
+        #     h, w = item.shape[-2], item.shape[-1]
+        #     item = item.reshape(-1, 5+configs.yolo_class_num, h*w).permute(1,0,2).reshape(5+configs.yolo_class_num, -1)
+        #     scores += [item[4, :].sigmoid()]
 
-        return scores
+        return output[2]
 
     def loss_in_box(self, img, box):
         img = _input_transform(img).to(configs.torch_device)
@@ -114,12 +120,12 @@ class Helper():
         thresh_loss = 0
         objects_num = 0
         loss = 0
-        for score in scores:
-            objects_num += (score>0.5).sum().item()
-            loss += score.sum()
-            mask = score>0.45
-            score = score *mask
-            if mask.sum()!=0: thresh_loss += (score.sum() / mask.sum())
+#        for score in scores:
+        objects_num = (scores>0.5).sum().item()
+        loss += scores.sum()
+        mask = scores>0.45
+        scores = scores *mask
+        if mask.sum()!=0: thresh_loss = (scores.sum() / mask.sum())
         if thresh_loss==0: return loss, objects_num
         return thresh_loss, objects_num
 

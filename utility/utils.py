@@ -187,16 +187,14 @@ def post_processing(img, conf_thresh, nms_thresh, output):
     if type(box_array).__name__ != 'ndarray':
         box_array = box_array.cpu().detach().numpy()
         confs = confs.cpu().detach().numpy()
-
+    #print("confs shape", confs.shape)
     num_classes = confs.shape[2]
-
     # [batch, num, 4]
     box_array = box_array[:, :, 0]
 
     # [batch, num, num_classes] --> [batch, num]
     max_conf = np.max(confs, axis=2)
     max_id = np.argmax(confs, axis=2)
-
     t2 = time.time()
 
     bboxes_batch = []

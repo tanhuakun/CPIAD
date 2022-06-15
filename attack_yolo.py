@@ -5,18 +5,20 @@ import torch
 from torch import nn
 import random
 from torch import optim
-import numpy
+import numpy as np
 from PIL import Image
 from torchvision import transforms
 import os
 from yolov4_helper import Helper as YoLov4Helper
 #from faster_helper import Helper as FasterHelper
 import cv2
-from utils.utils import *
+#from utils.utils import *
 from constant import *
 import argparse
 
 import configs
+
+from utility.torch_utils import do_detect
 
 use_cuda = True
 
@@ -26,10 +28,8 @@ def create_astroid_mask(m, img, box_scale, shape=(500, 500)):
     sized = cv2.resize(img, (m.width, m.height))
     sized = cv2.cvtColor(sized, cv2.COLOR_BGR2RGB)
 
-    for i in range(2):
-        start = time.time()
-        boxes = do_detect(m, sized, 0.4, 0.6, use_cuda)
-        finish = time.time()
+    #for i in range(2):
+    boxes = do_detect(m, sized, 0.4, 0.6, use_cuda)
         # if i == 1:
         #     print('%s: Predicted in %f seconds.' % (image_path, (finish - start)))
     
@@ -115,14 +115,18 @@ def create_grid_mask(darknet_model, img, lines=3, box_scale=1.0, shape=(500, 500
     h, w = img.shape[:2]
 
     img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
+    img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+    boxes = do_detect(darknet_model, img1, 0.5, 0.4, False)
+    
+    yolo_boxes = []
+    for inner_box in boxes:
 
-    boxes = do_detect(darknet_model, img1, 0.5, 0.4, True)
+        yolo_boxes.extend([[box[0] * w, box[1] * h, 
+            box[2] * w, box[3] * h] for box in inner_box])
 
-    yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h, 
-        (box[0] + box[2] / 2.0) * w, (box[1] + box[3] / 2.0) * h] for box in boxes]
-    boxes = yolo_boxes
-    grids = boxes
 
+    # b
+    grids = yolo_boxes
     # get boxes from the rcnn
     '''
     result = inference_detector(faster_model, image_path)
@@ -191,9 +195,9 @@ def create_grid_mask(darknet_model, img, lines=3, box_scale=1.0, shape=(500, 500
             mask = mask + tmp_mask
 
         visited_mask[y1:y2, x1:x2, :] = 1
-
+    
     maskSum = mask.sum()
-    print("mask sum", maskSum)
+    
     return mask, maskSum
 
 def get_delta(w):
@@ -224,6 +228,7 @@ def specific_attack(model_helpers, img, mask):
     min_img = img
     grads = 0
     #loop = asyncio.get_event_loop()
+    
     while t<max_iterations:
         t+=1
 
@@ -235,7 +240,6 @@ def specific_attack(model_helpers, img, mask):
 
         patch_img = img * (1-mask) + patch*mask
         patch_img = patch_img.to(configs.torch_device)
-
         attack_loss = 0
         object_nums = 0
         # https://xubiubiu.com/2019/06/12/python3-%E8%8E%B7%E5%8F%96%E5%8D%8F%E7%A8%8B%E7%9A%84%E8%BF%94%E5%9B%9E%E5%80%BC/

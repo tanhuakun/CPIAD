@@ -14,7 +14,7 @@ import torch
 
 import configs
 
-use_cuda = True
+use_cuda = False
 
 
 def get_yolo_boxes(img, m):
@@ -41,8 +41,7 @@ def get_yolo_boxes(img, m):
         finish = time.time()
         # if i == 1:
         #     print('%s: Predicted in %f seconds.' % (image_path, (finish - start)))
-
-    return plot_boxes_cv2(img, boxes[0], class_names=class_names)
+    return plot_boxes_cv2(img, boxes[0], class_names=None)
 
 def draw_boxes_with_label(cv2_image, yolo_model):
     resized_image = cv2.resize(cv2_image, (configs.yolo_cfg_width, configs.yolo_cfg_height))
@@ -92,9 +91,9 @@ if __name__ == "__main__":
 
     num_classes = m.num_classes
     
-    class_names = load_class_names('./x.names')
+    #class_names = load_class_names('./x.names')
 
-    
+        
     videoCap = cv2.VideoCapture(path) 
 
     width  = int(videoCap.get(cv2.CAP_PROP_FRAME_WIDTH))   # float `width`
@@ -111,15 +110,17 @@ if __name__ == "__main__":
 
     success, frame = videoCap.read()
     yolo_helper = YoloHelper()
+    yolo_helper.load_darknet_model(m)
     count = 0
     while success:
-        writer.write(draw_astroid_patches(frame, m).astype(numpy.uint8))
+        writer.write(draw_grid_patches(frame, yolo_helper).astype(numpy.uint8))
         success, frame = videoCap.read()
         count += 1
         print(count)
 
 
     writer.release()
+    
     # boxes = get_boxes(path)
     # print(len(boxes))
     # print(boxes)
