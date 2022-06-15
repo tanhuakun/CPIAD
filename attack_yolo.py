@@ -124,7 +124,7 @@ def create_grid_mask(darknet_model, img, lines=3, box_scale=1.0, shape=(500, 500
 
     img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
-    boxes = do_detect2(darknet_model, img1, 0.5, 0.4, False)
+    boxes = do_detect2(darknet_model, img1, 0.5, 0.4, use_cuda)
     
     yolo_boxes = []
     for inner_box in boxes:
