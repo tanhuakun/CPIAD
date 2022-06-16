@@ -212,6 +212,8 @@ def specific_attack(model_helpers, img, mask):
     #loop = asyncio.get_event_loop()
     success_count = 0
 
+    min_loss = 10000
+
     while t<max_iterations or success_attack:
         t+=1
 
@@ -239,7 +241,12 @@ def specific_attack(model_helpers, img, mask):
         if min_object_num>object_nums:
             min_object_num = object_nums
             min_img = patch_img
-        if object_nums==0:
+            min_loss = attack_loss
+        elif min_object_num == object_nums and min_loss > attack_loss:
+            min_img = patch_img
+            min_loss = attack_loss
+
+        if object_nums==0 and not success_attack:
             success_attack = True
             print("Success attack = True")
         if success_attack:

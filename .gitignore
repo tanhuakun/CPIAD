@@ -6,3 +6,4 @@ images*
 models
 videos*
 test*
+*__pycache__*
