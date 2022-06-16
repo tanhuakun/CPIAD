@@ -10,6 +10,8 @@ import cv2
 
 import configs
 
+from defense import bitwise_and_compose
+
 def get_yolo_boxes(image_path, yolo_model):
     img = Image.open(image_path).convert('RGB')
     resize_small = transforms.Compose([
@@ -32,6 +34,12 @@ def draw_boxes_with_label(cv2_image, yolo_model):
     boxes = do_detect(yolo_model, recoloured, 0.42, 0.4, True)
     if len(boxes) > 0:
         print("DETECTED", len(boxes))
+    return plot_boxes_cv2(cv2_image, boxes, None, ["prohibitory", "danger", "mandatory", "others"])
+
+def draw_boxes_on_defense(cv2_image, yolo_model, map_func):
+    recoloured = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
+    bit_removed = map_func(recoloured)
+    boxes = do_detect(yolo_model, bit_removed, 0.42, 0.4, True)
     return plot_boxes_cv2(cv2_image, boxes, None, ["prohibitory", "danger", "mandatory", "others"])
 
 def draw_grid_patches(cv2_image, yolo_helper):
@@ -74,8 +82,12 @@ if __name__ == "__main__":
     success, frame = videoCap.read()
     yolo_helper = YoloHelper()
     count = 0
-    while success:
-        writer.write(draw_grid_patches(frame, yolo_helper).astype(numpy.uint8))
+
+    map_func = bitwise_and_compose(int("11110000", 2))
+
+    while success and count < 150:
+        if count >= 125:
+            writer.write(draw_boxes_on_defense(frame, yolo_helper.darknet_model, map_func).astype(numpy.uint8))
         success, frame = videoCap.read()
         count += 1
         print(count)

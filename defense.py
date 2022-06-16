@@ -22,10 +22,10 @@ def bitwise_and_compose(mask):
 
 success, frame = videoCap.read()
 
-map_func = bitwise_and_compose(int("00001111", 2))
+map_func = bitwise_and_compose(int("11110000", 2))
 
 while success:
     writer.write(map_func(frame))
     success, frame = videoCap.read()
 
-writer.close()
+writer.release()
