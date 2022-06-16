@@ -31,7 +31,7 @@ def create_astroid_mask(darknet_model, img, box_scale, shape=(500, 500)):
 
     img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
-    boxes = do_detect(darknet_model, img1, 0.5, 0.4, False)
+    boxes = do_detect(darknet_model, img1, 0.5, 0.4, use_cuda)
     
 
     yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h,
@@ -213,6 +213,8 @@ def get_attack_loss(helper, img):
     return al, on
 
 def specific_attack(model_helpers, img, mask):
+    img = cv2.cvtColor(patch_img, cv2.COLOR_BGR2RGB)
+    img = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
     img = torch.from_numpy(img).float()
 
     t, max_iterations = 0, 60
@@ -238,6 +240,7 @@ def specific_attack(model_helpers, img, mask):
         patch[patch_connecticity] += 1
 
         patch_img = img * (1-mask) + patch*mask
+
         patch_img = patch_img.to(configs.torch_device)
         attack_loss = 0
         object_nums = 0

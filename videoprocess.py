@@ -15,7 +15,7 @@ import torch
 
 import configs
 
-use_cuda = False
+use_cuda = True
 
 
 def get_yolo_boxes(img, m):
@@ -79,7 +79,7 @@ def draw_astroid_patches(cv2_image, m):
 
 if __name__ == "__main__":
     
-    configs.torch_device = "cpu"
+    configs.torch_device = "cuda"
 
     configs.yolo_class_num = 4
 
@@ -96,33 +96,33 @@ if __name__ == "__main__":
 
 
     cv2_image = cv2.imread(path)
-    # videoCap = cv2.VideoCapture(path) 
+    videoCap = cv2.VideoCapture(path) 
 
-    # width  = int(videoCap.get(cv2.CAP_PROP_FRAME_WIDTH))   # float `width`
-    # height = int(videoCap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
+    width  = int(videoCap.get(cv2.CAP_PROP_FRAME_WIDTH))   # float `width`
+    height = int(videoCap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
 
-    configs.data_height = 800
-    configs.data_width = 1360
+    configs.data_height = height
+    configs.data_width = width
 
-    configs.yolo_cfg_width = myround(1360, 32)
-    configs.yolo_cfg_height = myround(800, 32)
+    configs.yolo_cfg_width = myround(width, 32)
+    configs.yolo_cfg_height = myround(height, 32)
 
-    # fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-    # writer = cv2.VideoWriter("test.mp4", fourcc, 30, (width, height))
+    fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+    writer = cv2.VideoWriter("test.mp4", fourcc, 30, (width, height))
 
-    # success, frame = videoCap.read()
+    success, frame = videoCap.read()
     yolo_helper = YoloHelper()
-    # count = 0
-    # while success:
-    #     writer.write(draw_astroid_patches(frame, m).astype(numpy.uint8))
-    #     success, frame = videoCap.read()
-    #     count += 1
-    #     print(count)
+    count = 0
+    while success:
+        writer.write(draw_astroid_patches(frame, m).astype(numpy.uint8))
+        success, frame = videoCap.read()
+        count += 1
+        print(count)
 
 
-    # writer.release()
+    writer.release()
 
-    cv2.imwrite("test5.png", draw_boxes_with_label(cv2_image, yolo_helper.darknet_model))
+    # cv2.imwrite("test5.png", draw_boxes_with_label(cv2_image, yolo_helper.darknet_model))
 
     # boxes = get_boxes(path)
     # print(len(boxes))

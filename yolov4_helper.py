@@ -83,10 +83,8 @@ class Helper():
         img = _input_transform(img).to(configs.torch_device)
         output = self.darknet_model(img)
         self.features = self.darknet_model.features
-        #print(output)
         scores = []
         for item in output:
-            # print(type(item))
             h, w = item.shape[-2], item.shape[-1]
             item = item.reshape(-1, 5+configs.yolo_class_num, h*w).permute(1,0,2).reshape(5+configs.yolo_class_num, -1)
             scores += [item[4, :].sigmoid()]
@@ -116,9 +114,7 @@ class Helper():
         thresh_loss = 0
         objects_num = 0
         loss = 0
-        print(scores)
         for score in scores:
-            print(len(score))
             objects_num += (score>0.5).sum().item()
             loss += score.sum()
             mask = score>0.45
