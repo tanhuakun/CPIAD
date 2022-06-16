@@ -11,7 +11,7 @@ import itertools
 import struct  # get_image_size
 import imghdr  # get_image_size
 from constant import *
-
+from torchvision import transforms
 import configs
 
 def sigmoid(x):
@@ -406,7 +406,9 @@ def do_detect(model, img, conf_thresh, nms_thresh, use_cuda=1):
         img = img.view(1, 3, height, width)
         img = img.float().div(255.0)
     elif type(img) == np.ndarray and len(img.shape) == 3:  # cv2 image
-        img = torch.from_numpy(img.transpose(2, 0, 1)).float().div(255.0).unsqueeze(0)
+        img = torch.from_numpy(img.transpose(2, 0, 1))
+        img = transforms.Resize((configs.yolo_resize_height, configs.yolo_resize_width))(img)
+        img = img.float().div(255.0).unsqueeze(0)
     elif type(img) == np.ndarray and len(img.shape) == 4:
         img = torch.from_numpy(img.transpose(0, 3, 1, 2)).float().div(255.0)
     elif type(img) == torch.Tensor and len(img.shape) == 4:

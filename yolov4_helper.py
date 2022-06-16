@@ -31,11 +31,11 @@ def resize(img:torch.tensor):
 
 def _input_transform(img:torch.tensor):
     ## bgr2rgb
-    new_img = torch.zeros(img.shape).to(configs.torch_device)
-    new_img[:,:,0] = new_img[:,:,0]+img[:,:,2]
-    new_img[:,:,1] = new_img[:,:,1]+img[:,:,1]
-    new_img[:,:,2] = new_img[:,:,2]+img[:,:,0]
-    img = new_img
+    # new_img = torch.zeros(img.shape).to(configs.torch_device)
+    # new_img[:,:,0] = new_img[:,:,0]+img[:,:,2]
+    # new_img[:,:,1] = new_img[:,:,1]+img[:,:,1]
+    # new_img[:,:,2] = new_img[:,:,2]+img[:,:,0]
+    # img = new_img
 
     # reisze
     img = resize(img)
@@ -80,10 +80,7 @@ class Helper():
         img = _input_transform(img)
 
     def get_cls_scores(self, img:torch.tensor):
-        #img = _input_transform(img).to(configs.torch_device)
-        img = img.round().detach().cpu().numpy()
-        img = cv2.resize(img, (configs.yolo_resize_width, configs.yolo_resize_height))
-        img = torch.from_numpy(img.transpose(2, 0, 1)).float().div(255.0).unsqueeze(0)
+        img = _input_transform(img).to(configs.torch_device)
         output = self.darknet_model(img)
         self.features = self.darknet_model.features
         scores = []
@@ -111,7 +108,7 @@ class Helper():
 
 
 
-    def attack_loss(self, img, conf_t=0.35, mask_t=0.25):
+    def attack_loss(self, img, conf_t=0.35, mask_t=0.31):
         img = img.to(configs.torch_device)
         scores = self.get_cls_scores(img)
         thresh_loss = 0
@@ -122,7 +119,8 @@ class Helper():
             loss += score.sum()
             mask = score>mask_t
             score = score *mask
-            if mask.sum()!=0: thresh_loss += (score.sum() / mask.sum())
+            if mask.sum()!=0:
+                thresh_loss += (score.sum() / mask.sum())
         if thresh_loss==0: return loss, objects_num
         return thresh_loss, objects_num
 

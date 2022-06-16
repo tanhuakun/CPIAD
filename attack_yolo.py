@@ -1,5 +1,6 @@
 import math
 import asyncio
+from cv2 import COLOR_RGB2BGR
 #from mmdet.apis import init_detector, inference_detector
 import torch
 from torch import nn
@@ -103,8 +104,7 @@ def create_grid_mask(darknet_model, img, lines=3, box_scale=1.0, shape=(500, 500
     # get yolo bounding boxes <-- this was commented out originally
     h, w = img.shape[:2]
 
-    img1 = cv2.resize(img, (configs.yolo_resize_width, configs.yolo_resize_height))
-    img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+    img1 = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     boxes = do_detect(darknet_model, img1, 0.35, 0.4, True)
 
     yolo_boxes = [[(box[0] - box[2] / 2.0) * w, (box[1] - box[3] / 2.0) * h, 
@@ -155,11 +155,7 @@ def create_grid_mask(darknet_model, img, lines=3, box_scale=1.0, shape=(500, 500
 
         ### is min_interval important???
         y_interval = (y2-y1)//(lines+1)
-        x_interval = (x2-x1)//(lines+1)
-
-        print("x11, y11, x11, y22", x11, y11, x22, y22)
-        print("y_interval x_interval", y_interval, x_interval)
-        
+        x_interval = (x2-x1)//(lines+1)        
         for i in range(1, lines+1):
             if mask.sum()>4500*3: break
             if y1+i*y_interval>y2: break
@@ -214,7 +210,9 @@ def specific_attack(model_helpers, img, mask):
     min_img = img
     grads = 0
     #loop = asyncio.get_event_loop()
-    while t<max_iterations:
+    success_count = 0
+
+    while t<max_iterations or success_attack:
         t+=1
 
         # check connectivity
@@ -238,14 +236,18 @@ def specific_attack(model_helpers, img, mask):
         """for al, on in res:
             attack_loss += al
             object_nums += on"""
-
         if min_object_num>object_nums:
             min_object_num = object_nums
             min_img = patch_img
         if object_nums==0:
             success_attack = True
-            break
-        if t%20==0: print("t: {}, attack_loss:{}, object_nums:{}".format(t, attack_loss, object_nums))
+            print("Success attack = True")
+        if success_attack:
+            success_count += 1
+            if success_count >= 5:
+                print("LOSS", attack_loss, "NUMS", object_nums)
+                break
+        if t%5==0: print("t: {}, attack_loss:{}, object_nums:{}".format(t, attack_loss, object_nums))
         attack_loss.backward()
         #grads = grads + w.grad / (torch.abs(w.grad)).sum()
         w = w - eps * w.grad.sign()
@@ -255,7 +257,7 @@ def specific_attack(model_helpers, img, mask):
     min_img = min_img.detach().cpu().numpy()
     
     
-    return success_attack, min_img
+    return success_attack, cv2.cvtColor(min_img, cv2.COLOR_RGB2BGR)
 
 
 if __name__ == "__main__":
