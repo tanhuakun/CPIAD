@@ -75,7 +75,7 @@ if __name__ == "__main__":
     yolo_helper = YoloHelper()
     count = 0
     while success:
-        writer.write(draw_grid_patches(frame, yolo_helper).astype(numpy.uint8))
+        writer.write(draw_grid_patches(frame, yolo_helper).round().astype(numpy.uint8))
         success, frame = videoCap.read()
         count += 1
         print(count)
