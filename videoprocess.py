@@ -45,12 +45,19 @@ def get_yolo_boxes(img, m):
 
     return plot_boxes_cv2(img, boxes[0], class_names=class_names)
 
-def draw_boxes_with_label(cv2_image, yolo_model):
+def draw_boxes_with_label(cv2_image, yolo_helper):
+    img = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
 
-    resized_image = cv2.resize(cv2_image, (configs.yolo_cfg_width, configs.yolo_cfg_height))
-    resized_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)
+    img1 = Image.fromarray(img)
 
-    boxes = do_detect(yolo_model, resized_image, 0.5, 0.4, True)
+    # resized_image = cv2.resize(cv2_image, (configs.yolo_cfg_width, configs.yolo_cfg_height))
+    resize_small = transforms.Compose([
+            transforms.Resize((configs.yolo_cfg_width, configs.yolo_cfg_height)),
+    ])
+
+    resized_image = resize_small(img1)
+
+    boxes = do_detect(yolo_helper.darknet_model, resized_image, 0.5, 0.4, True)
 
     return plot_boxes_cv2(cv2_image, boxes, None, ["prohibitory", "danger", "mandatory", "others"])
 
@@ -68,12 +75,12 @@ def draw_grid_patches(cv2_image, yolo_helper):
 
 #     return attack_img
 
-def draw_astroid_patches(cv2_image, m):
-    mask = create_astroid_mask(m, cv2_image, 1.0, (configs.data_height, configs.data_width))
-    yolo_helper = YoloHelper()
-    success_attack, attack_img = specific_attack([yolo_helper], cv2_image, mask)
-
-    return attack_img
+def draw_astroid_patches(cv2_image, yolo_helper):
+    mask, maskSum = create_astroid_mask(yolo_helper.darknet_model, cv2_image, 1.0, (configs.data_height, configs.data_width))
+    if maskSum != 0:
+        success_attack, attack_img = specific_attack([yolo_helper], cv2_image, mask)
+        return attack_img
+    return cv2_image
 
 
 
@@ -83,7 +90,7 @@ if __name__ == "__main__":
 
     configs.yolo_class_num = 4
 
-    path="./test3.png"
+    path="./attack_1.mp4"
 
     # m = Darknet('./models/gtsdb.cfg')
 
@@ -108,13 +115,13 @@ if __name__ == "__main__":
     configs.yolo_cfg_height = myround(height, 32)
 
     fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-    writer = cv2.VideoWriter("test.mp4", fourcc, 30, (width, height))
+    writer = cv2.VideoWriter("detect_attack_1.mp4", fourcc, 30, (width, height))
 
     success, frame = videoCap.read()
     yolo_helper = YoloHelper()
     count = 0
     while success:
-        writer.write(draw_astroid_patches(frame, m).astype(numpy.uint8))
+        writer.write(draw_astroid_patches(frame, yolo_helper).astype(numpy.uint8))
         success, frame = videoCap.read()
         count += 1
         print(count)

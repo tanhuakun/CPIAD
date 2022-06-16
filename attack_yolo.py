@@ -20,17 +20,29 @@ import argparse
 
 import configs
 
-from utility.torch_utils import do_detect2
+# from utility.torch_utils import do_detect2
 
 use_cuda = True
 
 def create_astroid_mask(darknet_model, img, box_scale, shape=(500, 500)):
     mask = torch.zeros(*shape, 3)
 
-    h, w = img.shape[:2]
+    # h, w = img.shape[:2]
 
-    img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
-    img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+    # img1 = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
+    img1 = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    img1 = Image.fromarray(img1)
+
+
+    resize_small = transforms.Compose([
+            transforms.Resize((configs.yolo_cfg_width, configs.yolo_cfg_height)),
+    ])
+
+    img1 = resize_small(img1)
+
+    h, w = np.array(img).shape[:2]
+
     boxes = do_detect(darknet_model, img1, 0.5, 0.4, use_cuda)
     
 
@@ -213,8 +225,8 @@ def get_attack_loss(helper, img):
     return al, on
 
 def specific_attack(model_helpers, img, mask):
-    img = cv2.cvtColor(patch_img, cv2.COLOR_BGR2RGB)
-    img = cv2.resize(img, (configs.yolo_cfg_width, configs.yolo_cfg_height))
+    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # img = cv2.resize(img, (configs.data_width, configs.data_height))
     img = torch.from_numpy(img).float()
 
     t, max_iterations = 0, 60
@@ -237,7 +249,11 @@ def specific_attack(model_helpers, img, mask):
         patch_connecticity = torch.abs(get_delta(w)-img).sum(-1)
         patch_connecticity = (patch_connecticity==0)
         patch = get_delta(w)
+        # print(len(patch))
+        # print(configs.wi)
         patch[patch_connecticity] += 1
+        # print(len(patch))
+        # print(len(mask))
 
         patch_img = img * (1-mask) + patch*mask
 
@@ -258,7 +274,7 @@ def specific_attack(model_helpers, img, mask):
         if min_object_num>object_nums:
             min_object_num = object_nums
             min_img = patch_img
-        if object_nums==0:
+        if object_nums == 0 and t >= 7:
             success_attack = True
             break
         if t%20==0: print("t: {}, attack_loss:{}, object_nums:{}".format(t, attack_loss, object_nums))
@@ -274,71 +290,71 @@ def specific_attack(model_helpers, img, mask):
     return success_attack, min_img
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    SOURCE_DIR = "images2"
-    configs.torch_device = "cpu"
-    configs.yolo_cfg_width = 960
-    configs.yolo_cfg_height = 576
-    configs.yolo_class_num = 4
-    configs.data_width = 1360
-    configs.data_height = 800
-    random.seed(30)
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--patch_type', type=str, default="grid")
-    parser.add_argument('--lines', type=int, default=3)
-    parser.add_argument('--box_scale', type=float, default=1.0)
-    args = parser.parse_args()
-    patch_type = args.patch_type
-    lines = args.lines
-    box_scale = args.box_scale
+#     SOURCE_DIR = "images2"
+#     configs.torch_device = "cpu"
+#     configs.yolo_cfg_width = 960
+#     configs.yolo_cfg_height = 576
+#     configs.yolo_class_num = 4
+#     configs.data_width = 1360
+#     configs.data_height = 800
+#     random.seed(30)
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('--patch_type', type=str, default="grid")
+#     parser.add_argument('--lines', type=int, default=3)
+#     parser.add_argument('--box_scale', type=float, default=1.0)
+#     args = parser.parse_args()
+#     patch_type = args.patch_type
+#     lines = args.lines
+#     box_scale = args.box_scale
 
-    yolov4_helper = YoLov4Helper()
-    #faster_helper = FasterHelper()
-    #model_helpers = [yolov4_helper, faster_helper]
-    model_helpers = [yolov4_helper]
-    success_count = 0
+#     yolov4_helper = YoLov4Helper()
+#     #faster_helper = FasterHelper()
+#     #model_helpers = [yolov4_helper, faster_helper]
+#     model_helpers = [yolov4_helper]
+#     success_count = 0
 
-    if patch_type == "grid":
-        save_image_dir = "images_p_grid_{}x{}_{}".format(lines, lines, box_scale)
-    else:
-        save_image_dir = "images_p_astroid_{}".format(box_scale)
-    os.system("mkdir {}".format(save_image_dir))
+#     if patch_type == "grid":
+#         save_image_dir = "images_p_grid_{}x{}_{}".format(lines, lines, box_scale)
+#     else:
+#         save_image_dir = "images_p_astroid_{}".format(box_scale)
+#     os.system("mkdir {}".format(save_image_dir))
 
 
-    for i, img_name in enumerate(os.listdir(SOURCE_DIR)):
-        img_path_ps = os.listdir(save_image_dir)
-        '''
-        if img_path in img_path_ps:
-            success_count+= 1
-            continue
-        if img_path.replace(".", "_fail.") in img_path_ps: continue
-        '''
-        print("img_path", img_name)
+#     for i, img_name in enumerate(os.listdir(SOURCE_DIR)):
+#         img_path_ps = os.listdir(save_image_dir)
+#         '''
+#         if img_path in img_path_ps:
+#             success_count+= 1
+#             continue
+#         if img_path.replace(".", "_fail.") in img_path_ps: continue
+#         '''
+#         print("img_path", img_name)
             
-        image_source = os.path.join(SOURCE_DIR, img_name)
+#         image_source = os.path.join(SOURCE_DIR, img_name)
 
-        cv2_image = cv2.imread(image_source)
+#         cv2_image = cv2.imread(image_source)
 
-        if patch_type=="grid":
-            mask = create_grid_mask(yolov4_helper.darknet_model, cv2_image, lines, box_scale, (configs.data_height, configs.data_width))
-        else:
-            mask = create_astroid_mask(yolov4_helper.darknet_model, cv2_image, box_scale, (configs.data_height, configs.data_width))
+#         if patch_type=="grid":
+#             mask = create_grid_mask(yolov4_helper.darknet_model, cv2_image, lines, box_scale, (configs.data_height, configs.data_width))
+#         else:
+#             mask = create_astroid_mask(yolov4_helper.darknet_model, cv2_image, box_scale, (configs.data_height, configs.data_width))
         
-        success_attack, attack_img = specific_attack(model_helpers, cv2_image, mask)
+#         success_attack, attack_img = specific_attack(model_helpers, cv2_image, mask)
 
-        if success_attack:
-            path = os.path.join(os.getcwd(), save_image_dir, img_name)
-            success_count += 1
-        else:
-            path = os.path.join(os.getcwd(), save_image_dir, img_name.split(".")[0] + "_fail.png")
+#         if success_attack:
+#             path = os.path.join(os.getcwd(), save_image_dir, img_name)
+#             success_count += 1
+#         else:
+#             path = os.path.join(os.getcwd(), save_image_dir, img_name.split(".")[0] + "_fail.png")
         
-        if cv2.imwrite(path, attack_img):
-            print("Image saved at " + path)
-        else:
-            print("Image faled to save at " + path)            
+#         if cv2.imwrite(path, attack_img):
+#             print("Image saved at " + path)
+#         else:
+#             print("Image faled to save at " + path)            
                 
-        print("success: {}/{}".format(success_count, i + 1))
+#         print("success: {}/{}".format(success_count, i + 1))
         
             
 
