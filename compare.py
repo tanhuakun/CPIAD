@@ -3,25 +3,46 @@ import cv2
 import numpy as np
 
 
-vid1 = "./videos/germany_detect_attack2.mp4"
-vid2 = "./videos/germany_detect_attack3.mp4"
+compare_list = [
+    "C:/Users/uif08808/Downloads/sample6_min5_iter_loss_detect.mp4",
+    "C:/Users/uif08808/Downloads/test_defense.mp4",
+    "C:/Users/uif08808/Downloads/test_defense2.mp4",
+    "C:/Users/uif08808/Downloads/test_defense3.mp4"
+]
+
+videoCapList = []
+
+for path in compare_list:
+    videoCapList.append(cv2.VideoCapture(path))
 
 
+frames = []
 
-videoCap1 = cv2.VideoCapture(vid1)
-videoCap2 = cv2.VideoCapture(vid2)
+for videoCapture in videoCapList:
+    frames.append(videoCapture.read())
 
-success1, frame1 = videoCap1.read()
-success2, frame2 = videoCap2.read()
+width  = int(videoCapList[0].get(cv2.CAP_PROP_FRAME_WIDTH))   # float `width`
+height = int(videoCapList[0].get(cv2.CAP_PROP_FRAME_HEIGHT))  # float `height`
+
+fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+writer = cv2.VideoWriter("compare.mp4", fourcc, 30, (width * 2, height * 2))
 
 
 count = 0
+while all(success_and_frame[0] for success_and_frame in frames):
+    
+    left_stacked = np.concatenate((frames[0][1], frames[1][1]), axis=0)
+    right_stacked = np.concatenate((frames[2][1], frames[3][1]), axis=0)
 
-while success1 and success2:
-    stacked = np.concatenate((frame1, frame2), axis=0)
-    cv2.imwrite(f"./test/{count}.jpg", stacked)
-    success1, frame1 = videoCap1.read()
-    success2, frame2 = videoCap2.read()
+    total = np.concatenate((left_stacked, right_stacked), axis=1)
+    writer.write(total)
+
+    for i in range(len(videoCapList)):
+        frames[i] = videoCapList[i].read()
+
     count += 1
     if count % 100 == 0:
-        (count)
+        print(count)
+
+
+writer.release()
