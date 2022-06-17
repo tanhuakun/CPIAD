@@ -198,7 +198,7 @@ def specific_attack(model_helpers, img, mask):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = torch.from_numpy(img).float()
 
-    t, max_iterations = 0, 60
+    t, max_iterations = 0, 100
     stop_loss = 1e-6
     eps = 1
     w = torch.zeros(img.shape).float()+127
@@ -251,7 +251,7 @@ def specific_attack(model_helpers, img, mask):
             print("Success attack = True")
         if success_attack:
             success_count += 1
-            if success_count >= 5:
+            if success_count >= 8:
                 print("LOSS", attack_loss, "NUMS", object_nums)
                 break
         if t%5==0: print("t: {}, attack_loss:{}, object_nums:{}".format(t, attack_loss, object_nums))
