@@ -248,11 +248,9 @@ def specific_attack(model_helpers, img, mask):
 
         if object_nums==0 and not success_attack:
             success_attack = True
-            print("Success attack = True")
         if success_attack:
             success_count += 1
-            if success_count >= 8:
-                print("LOSS", attack_loss, "NUMS", object_nums)
+            if success_count >= 5:
                 break
         if t%5==0: print("t: {}, attack_loss:{}, object_nums:{}".format(t, attack_loss, object_nums))
         attack_loss.backward()
@@ -307,11 +305,11 @@ if __name__ == "__main__":
             continue
         if img_path.replace(".", "_fail.") in img_path_ps: continue
         '''
-        print("img_path", img_name)
             
         image_source = os.path.join(SOURCE_DIR, img_name)
 
         cv2_image = cv2.imread(image_source)
+        cv2_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
 
         if patch_type=="grid":
             mask = create_grid_mask(yolov4_helper.darknet_model, cv2_image, lines, box_scale, (configs.data_height, configs.data_width))

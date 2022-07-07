@@ -68,9 +68,7 @@ def transforms_test(img_path="../images/991.png"):
     assert (img1-img2).sum()==0
 
 class Helper():
-    def __init__(self):
-        cfgfile = "models/gtsdb.cfg"
-        weightfile = "models/gtsdb_4000.weights"
+    def __init__(self, cfgfile="./models/yolov4-tianchi.cfg", weightfile="./models/yolov4-tianchi.weights"):
         self.darknet_model = Darknet(cfgfile)
         self.darknet_model.load_weights(weightfile)
         #self.darknet_model = self.darknet_model.train().to(device)

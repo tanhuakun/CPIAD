@@ -67,7 +67,7 @@ class Boxes_Logger:
                         # we have paired it with a box1 already
                         continue
 
-                    iou = bbox_iou(box1, box2, True)
+                    iou = bbox_iou(box1, box2, False)
                     if iou > iou_thres:
                         # likely the same box
                         if box1[5] != box2[5]:
@@ -134,7 +134,7 @@ def plot_boxes_diff(cv2_image, only_file1, only_file2, both_files, both_but_clas
 if __name__ == "__main__":
     logger = Boxes_Logger()
     
-    only_file1, only_file2, both_files, both_but_class_diff = logger.find_log_diff( "./boxes_040conf_og.txt", "./boxes_040conf.txt")
+    only_file1, only_file2, both_files, both_but_class_diff = logger.find_log_diff( "./videos/benign_log.txt", "./videos/attack_log.txt")
     '''
     path="./videos/high_iter_defense_keep2.mp4"
     
